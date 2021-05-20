@@ -1,0 +1,115 @@
+docker build . --> To initially build an image
+
+docker build -t olaodus/nameOfYourFile --> If you wish to tag it and build an image based on d current directory
+
+docker push olaodus/nameOfYourFile --> If you wish to run docker on kubernetes
+
+docker run IDofImage or docker run imageTag (line 3) --> create and start a container based on imageID/imageTag
+
+docker run -it olaodus/nameOfYourFile sh --> Opens a shell and shows all files and folders therein
+
+docker ps --> to print out information about all running containers
+
+docker exec -it containerID sh --> executes the given command in a running shell
+
+docker logs containerID --> Print out logs from a given container
+
+
+                         ******KUBERNETES******
+    
+    1. Create a folder within your application called infra
+
+    2. Within the infra folder, create a folder called k8s
+
+    3. In the k8s folder, create a yourMicroserviceFileName.yaml
+
+    4. Within the yourMicroserviceFileName.yaml file, write out a set of commands for k8s 
+        a) NOTE: Your name/metadata value cannot contain _, it won't work if it does.
+
+    5. Build your docker image with the normal command (docker build -t olaodus/nameOfYourFile .)
+
+    6. After creataing and tagging your image with the aboove command, run your k8s yaml file(your config file)
+         a) kubectl apply -f yourYamlFileName.yaml
+         b)On successful execution, you will see pod/yourYamlFileName created
+
+    7. To check the number of your running pods
+        a) kubectl get pods
+        b) The above will show the info of the pod that was created with your yaml file (See Number 6a)
+
+    8. To open kubernetes in shell 
+        a) kubectl exec -it docker-practice sh
+
+    9. kubectl logs podName
+       a) Will print out logs of the given pod (may be used to start running the program...)
+       b) It sorts of acts like docker run imageName
+
+    10. kubectl describe pod podName
+         a) It will print out some information about the running podName that you have provided.
+
+    11. kubectl delete pod podName -> Useful if you wish to restart a pod
+        a) Deletes the podName given  
+        b) Do the step 6a again to restart the pod     
+
+    12.                   DEPLOYMENT COMMANDS 
+      i)   kubectl get deployments --> Lists all running deployments
+      ii)  kubectl describe deployment yourDeploymentName --> Prints details about a specific deployment
+      iii) kubectl apply -f yourConfigFileName --> Create a deployment out of a config file
+      iv)  kubectl delete deployment yourDeploymentName --> Deletes the specif deployment
+            If you delete a deployment, all the associated pods gets deleted as well!!
+        v) kubectl get pods
+        vi)kubectl logs nameOfYourFile-depl-numberGottedFromGetPods-moreNumGottenFromGetPods
+            
+
+    13. kubectl rollout restart deployment nameOfYourYamlFileWithoutThe.Yaml
+         Run the above command after making changes and rebuilding your docker image and
+         doing: docker push imageName --> Pushes to docker hub
+         It will restart kubernetes and update it with the latest version of your newly
+         built and pushed (to docker hub) docker image.
+
+                                          SERVICES
+    1. Services are also created using the config file, as with DEPLOYMENTS.
+    2. They provide communications between the pods, so any pod can throw their data to the Services
+        and every pod can collect any data that they wish from the services. It is somewhat likes a 
+        repository of data. Also, if you need to access a piece of information from outside a cluster or outside a 
+        microservice, you use the SERVICE.
+
+    3. The TWO main services are;
+        i)   Cluster IP --> It sets out an easy to remember URL to access a pod. It ONLY exposes pods in the cluster.(Pod to Pod)
+        ii)  Load Balancer --> Makes a pod accessible from outside of a cluster. This is the right way to expose a pod externally.
+        iii) Node Port --> Can be used in place of a load balancer but ONLY in development !
+
+        iv) We will define two ports within the yaml file, one being the port and the other being the targetPort.
+            The targetPort is the one where our docker container is running on and the port is the one that we 
+        v)  On running kubectl get services: we will see something like 4000:30886/TCP. The 4000 here is the port
+        that we have specified for k8s to run on. The 30886 is a randomly generated nodePort by k8s. So, when
+        make a request on the browser for example, it gets forwarded to the node service which is the Port and in
+        turn, it forwards to the targetPort, which is where our docker image is housed to get the requested info
+        that was send from the browser. It is like a three-way thingy.
+        nodePort --> Port (Node port service) --> targetPort (Pod (where the containers are running))
+
+
+    4. Some commands....
+        i) kubectl get services --> Lists all the running services
+        ii) kubectl describe service docker-practice-srv --> Gives info on the specified service incl its ports
+
+
+    5. To create a Cluster IP service:
+        i) You can choose to create a separate config file for it
+        ii) You can create it in the depl.yaml file but be sure to preceed with --- then write on the next line
+
+    6. Note: If your metadata - name on the srv.yaml is the same as the metadata - name on the depl.yaml
+       as in when declaring the Cluster IP, it will throw an error, so be sure to change it on the depl.yaml 
+
+    7. To run docker on kubernetes:
+         i) docker build -t olaodus/nameOfYourFile .
+         ii) docker push olaodus/nameOfYourFile --> pushes the file to docker hub
+         iii) kubectl apply -f deployment yourYamlFileName.yaml (if unapplied previously)
+         iv) kubectl apply -f service yourServiceFileName.srv (if unapplied previously)
+         v) You can then run the localhost on your browser with the assigned k8s port
+              you can get this from the ...get services
+         v) kubectl get deployments (just for viewing your deployments - optional)
+         vi) kubectl get services   (just for viewing your services - optional)
+         vii) kubectl get pods      (just for viewing your pods - optional)
+
+
+
